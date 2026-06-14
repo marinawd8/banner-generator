@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Banner Generator</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+<div class="app">
+
+  <header class="header">
+    <div class="header-title"><span class="logo">◆</span><h1>Banner Generator</h1></div>
+    <p class="header-sub">ТГ 1080×1080 · Email 1080×420 · бесплатно</p>
+  </header>
+
+  <main>
+
+    <!-- 1. Цвета -->
+    <section class="card">
+      <h2 class="card-title">1 — Цвета сайта</h2>
+      <div class="form-group">
+        <label for="siteUrl">URL сайта <span class="hint">— извлечём цвета автоматически</span></label>
+        <div class="input-row">
+          <input type="url" id="siteUrl" placeholder="https://example.com" />
+          <button id="fetchColorsBtn" class="btn-outline">Извлечь</button>
+        </div>
+        <div id="fetchError" class="field-error" hidden></div>
+      </div>
+      <div class="colors-grid">
+        <label class="color-label">
+          <input type="color" id="primaryColor" value="#1055cc" />
+          <span class="color-name">Основной</span>
+          <span class="color-hex" id="primaryHex">#1055cc</span>
+        </label>
+        <label class="color-label">
+          <input type="color" id="accentColor" value="#cc1111" />
+          <span class="color-name">Акцент</span>
+          <span class="color-hex" id="accentHex">#cc1111</span>
+        </label>
+        <label class="color-label">
+          <input type="color" id="bgColor" value="#f4f4f4" />
+          <span class="color-name">Фон</span>
+          <span class="color-hex" id="bgHex">#f4f4f4</span>
+        </label>
+        <label class="color-label">
+          <input type="color" id="borderColor" value="#1055cc" />
+          <span class="color-name">Рамка</span>
+          <span class="color-hex" id="borderHex">#1055cc</span>
+        </label>
+      </div>
+    </section>
+
+    <!-- 2. Текст -->
+    <section class="card">
+      <h2 class="card-title">2 — Текст вебинара</h2>
+      <p class="card-hint">Для анонсных баннеров: без даты, с датой, уже завтра, уже сегодня</p>
+      <div class="form-group">
+        <label for="category">Категория <span class="hint">— маленькая плашка-тег</span></label>
+        <input type="text" id="category" placeholder="Родительское онлайн-собрание для детей 8–16 лет" />
+      </div>
+      <div class="form-group">
+        <label for="heading">Заголовок <span class="hint">— крупный текст</span></label>
+        <textarea id="heading" rows="2" placeholder="Как найти то, что зажжёт мотивацию вашего ребёнка"></textarea>
+      </div>
+      <div class="form-group">
+        <label for="subtitle">Подзаголовок <span class="hint">— опционально</span></label>
+        <input type="text" id="subtitle" placeholder="И превратить любое увлечение в навыки" />
+      </div>
+      <div class="form-group">
+        <label for="eventDate">Дата <span class="hint">— опционально</span></label>
+        <input type="text" id="eventDate" placeholder="16 июня в 13:00 МСК" />
+      </div>
+    </section>
+
+    <!-- 3. Картинки -->
+    <section class="card">
+      <h2 class="card-title">3 — Картинки</h2>
+      <div class="uploads-row">
+
+        <div class="upload-slot">
+          <div class="upload-slot-label">Фото <span class="hint">— для анонсных (люди, сцена)</span></div>
+          <div class="icons-zone">
+            <input type="file" id="filePhoto" accept="image/*" multiple hidden />
+            <div class="icon-thumbs" id="photoThumbs">
+              <button class="add-icon-btn" id="addPhotoBtn">
+                <span>+</span><span class="add-icon-label">Добавить</span>
+              </button>
+            </div>
+            <p class="icons-hint">Каждое фото — на свой анонсный баннер</p>
+          </div>
+        </div>
+
+        <div class="upload-slot">
+          <div class="upload-slot-label">Иконки <span class="hint">— для статусных (часы, мегафон...)</span></div>
+          <div class="icons-zone">
+            <input type="file" id="fileIcon" accept="image/*" multiple hidden />
+            <div class="icon-thumbs" id="iconThumbs">
+              <button class="add-icon-btn" id="addIconBtn">
+                <span>+</span><span class="add-icon-label">Добавить</span>
+              </button>
+            </div>
+            <p class="icons-hint">Каждая иконка — на свой статусный баннер</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <button id="generateBtn" class="btn-primary" disabled>◆ Генерировать баннеры</button>
+    <div id="generateError" class="field-error" hidden></div>
+
+    <!-- Результаты -->
+    <section id="resultsSection" hidden>
+      <div class="results-header">
+        <div class="tabs">
+          <button class="tab active" data-tab="tg">ТГ · 1080×1080</button>
+          <button class="tab" data-tab="email">Email · 1080×420</button>
+          <button class="tab" data-tab="all">Все</button>
+        </div>
+        <button id="downloadBtn" class="btn-outline">↓ Скачать ZIP</button>
+      </div>
+      <div class="banner-grid" id="bannerGrid"></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Редактор баннера -->
+<div class="modal hidden" id="editorModal">
+  <div class="modal-overlay" id="modalOverlay"></div>
+  <div class="modal-box">
+    <div class="modal-header">
+      <span id="editorTitle">Редактор баннера</span>
+      <button class="modal-close" id="modalClose">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="editor-canvas-wrap" id="editorCanvasWrap">
+        <canvas id="editorCanvas"></canvas>
+      </div>
+
+      <div class="mode-tabs">
+        <button class="mode-tab active" data-mode="img">Картинка</button>
+        <button class="mode-tab" data-mode="text">Текст</button>
+      </div>
+
+      <!-- Контролы картинки -->
+      <div class="editor-controls" id="imgControls">
+        <label class="editor-label">
+          Размер картинки
+          <input type="range" id="imgScaleSlider" min="0.2" max="3" step="0.05" value="1" />
+        </label>
+        <div class="editor-hint">Перетащи картинку чтобы переместить</div>
+        <div class="editor-btns">
+          <button id="imgReplaceBtn" class="btn-outline">↑ Сменить картинку</button>
+          <input type="file" id="imgReplaceFile" accept="image/*" hidden />
+          <button id="editorReset" class="btn-outline">↺ Сброс</button>
+        </div>
+      </div>
+
+      <!-- Контролы текста -->
+      <div class="editor-controls hidden" id="textControls">
+        <label class="editor-label">
+          Размер текста
+          <input type="range" id="textScaleSlider" min="0.4" max="1.8" step="0.05" value="1" />
+        </label>
+        <div class="editor-hint">Перетащи текстовый блок чтобы переместить</div>
+        <div class="editor-btns">
+          <button id="textReset" class="btn-outline">↺ Сброс текста</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="editorCancel" class="btn-outline">Отмена</button>
+      <button id="editorSave" class="btn-save">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
